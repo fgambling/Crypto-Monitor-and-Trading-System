@@ -1,0 +1,648 @@
+{
+ "Resources": {
+  "ExtractQueue83C1B7E4": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "ExtractQueue",
+    "VisibilityTimeout": 60
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/ExtractQueue/Resource"
+   }
+  },
+  "IngestFunctionServiceRole55EB4427": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/IngestFunction/ServiceRole/Resource"
+   }
+  },
+  "IngestFunctionServiceRoleDefaultPolicy8EB1E4A7": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":dynamodb:ap-southeast-2:",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":table/Posts"
+          ]
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "ExtractQueue83C1B7E4",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "IngestFunctionServiceRoleDefaultPolicy8EB1E4A7",
+    "Roles": [
+     {
+      "Ref": "IngestFunctionServiceRole55EB4427"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/IngestFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "IngestFunction4B2F2EB2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+     },
+     "S3Key": "b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_POSTS": "Posts",
+      "TABLE_SIGNALS": "Signals",
+      "QUEUE_URL": {
+       "Ref": "ExtractQueue83C1B7E4"
+      },
+      "MARKET_CAP_MIN": "500000",
+      "VOLUME_MIN": "100000"
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "IngestFunctionServiceRole55EB4427",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "IngestFunctionServiceRoleDefaultPolicy8EB1E4A7",
+    "IngestFunctionServiceRole55EB4427"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/IngestFunction/Resource",
+    "aws:asset:path": "asset.b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ExtractFunctionServiceRole4660E294": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/ServiceRole/Resource"
+   }
+  },
+  "ExtractFunctionServiceRoleDefaultPolicy39BDF15D": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":dynamodb:ap-southeast-2:",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":table/Signals"
+          ]
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "ExtractQueue83C1B7E4",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ExtractFunctionServiceRoleDefaultPolicy39BDF15D",
+    "Roles": [
+     {
+      "Ref": "ExtractFunctionServiceRole4660E294"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "ExtractFunctionABD5F5B5": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+     },
+     "S3Key": "7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_POSTS": "Posts",
+      "TABLE_SIGNALS": "Signals",
+      "QUEUE_URL": {
+       "Ref": "ExtractQueue83C1B7E4"
+      },
+      "MARKET_CAP_MIN": "500000",
+      "VOLUME_MIN": "100000"
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "ExtractFunctionServiceRole4660E294",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "ExtractFunctionServiceRoleDefaultPolicy39BDF15D",
+    "ExtractFunctionServiceRole4660E294"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/Resource",
+    "aws:asset:path": "asset.7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ExtractFunctionSqsEventSourceCryptoMonitorStackExtractQueue97DC5267CBD90D8A": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "ExtractQueue83C1B7E4",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "ExtractFunctionABD5F5B5"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/SqsEventSource:CryptoMonitorStackExtractQueue97DC5267/Resource"
+   }
+  },
+  "CryptoMonitorApi0DB8F5B2": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Name": "CryptoMonitor"
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Resource"
+   }
+  },
+  "CryptoMonitorApiCloudWatchRoleE0F68B4A": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "apigateway.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+       ]
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/CloudWatchRole/Resource"
+   }
+  },
+  "CryptoMonitorApiAccount1059C299": {
+   "Type": "AWS::ApiGateway::Account",
+   "Properties": {
+    "CloudWatchRoleArn": {
+     "Fn::GetAtt": [
+      "CryptoMonitorApiCloudWatchRoleE0F68B4A",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "CryptoMonitorApi0DB8F5B2"
+   ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Account"
+   }
+  },
+  "CryptoMonitorApiDeployment7B2F7B31970e3985dbaaba7ed1b8464846f5e256": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "Automatically created by the RestApi construct",
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "DependsOn": [
+    "CryptoMonitorApiingestPOST2423D738",
+    "CryptoMonitorApiingestDB74D2C8"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Deployment/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
+  "CryptoMonitorApiDeploymentStageprod1375723F": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "CryptoMonitorApiDeployment7B2F7B31970e3985dbaaba7ed1b8464846f5e256"
+    },
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    },
+    "StageName": "prod"
+   },
+   "DependsOn": [
+    "CryptoMonitorApiAccount1059C299"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/DeploymentStage.prod/Resource"
+   }
+  },
+  "CryptoMonitorApiingestDB74D2C8": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "CryptoMonitorApi0DB8F5B2",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "ingest",
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/Resource"
+   }
+  },
+  "CryptoMonitorApiingestPOSTApiPermissionCryptoMonitorStackCryptoMonitorApi18B4E178POSTingest1D2342D5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "IngestFunction4B2F2EB2",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:ap-southeast-2:",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CryptoMonitorApi0DB8F5B2"
+       },
+       "/",
+       {
+        "Ref": "CryptoMonitorApiDeploymentStageprod1375723F"
+       },
+       "/POST/ingest"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/POST/ApiPermission.CryptoMonitorStackCryptoMonitorApi18B4E178.POST..ingest"
+   }
+  },
+  "CryptoMonitorApiingestPOSTApiPermissionTestCryptoMonitorStackCryptoMonitorApi18B4E178POSTingestF4E856B9": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "IngestFunction4B2F2EB2",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:ap-southeast-2:",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CryptoMonitorApi0DB8F5B2"
+       },
+       "/test-invoke-stage/POST/ingest"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/POST/ApiPermission.Test.CryptoMonitorStackCryptoMonitorApi18B4E178.POST..ingest"
+   }
+  },
+  "CryptoMonitorApiingestPOST2423D738": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:ap-southeast-2:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "IngestFunction4B2F2EB2",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "CryptoMonitorApiingestDB74D2C8"
+    },
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/POST/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/21Ry1LDMAz8Fu6u6ASGe8rjVigt94ziiNR52CGy28lk/O/YTqEcOGm1412t5AyybA3rGzzzSlbtqlMlzAeLshWBKuZq0tibqoQPLDvaIJPgL4b53ZEj8fipE/Ciw76ssNCmoobhNZUXp6VVRguFPcx70yVBqjvTKTnFdkFe8F2BzGQZ8lhCDxsnW7Jp5mIPcxD8uj6fSNuDcaOkLQ6D0nX0+5/d0dgr5iDzAgdVo6UzTiEUsc0HlXJdYS6lcdqKJxo6M/XBMLJ/unCgOi2zgCBNA1PUn+biueAt2aOpIrUg76/v0r7R6JL1zdnBWS/iLaHh21N2Dw/hixpWajWGXKon2C/1GypkHNu/AQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "CryptoMonitorApiEndpointA53428F7": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "CryptoMonitorApi0DB8F5B2"
+      },
+      ".execute-api.ap-southeast-2.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "CryptoMonitorApiDeploymentStageprod1375723F"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "ApiUrl": {
+   "Description": "Invoke URL for the ingest endpoint",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "CryptoMonitorApi0DB8F5B2"
+      },
+      ".execute-api.ap-southeast-2.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "CryptoMonitorApiDeploymentStageprod1375723F"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "ExtractQueueUrl": {
+   "Description": "SQS queue URL for post ingestion",
+   "Value": {
+    "Ref": "ExtractQueue83C1B7E4"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

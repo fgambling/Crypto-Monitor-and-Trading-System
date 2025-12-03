@@ -1,0 +1,11 @@
+curl -X POST "$API_URL/ingest" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "tweetId": "t-demo-1",
+    "userId": "u-demo-1",
+    "username": "demo",
+    "text": "DOGE to the moon!",
+    "createdAt": "2025-11-03T06:22:54.000Z",
+    "keywords": ["doge"],
+    "sentiment": "bullish"
+  }'

@@ -1,0 +1,51 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09": {
+      "displayName": "IngestFunction/Code",
+      "source": {
+        "path": "asset.b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-ap-southeast-2-5dd0b413": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2",
+          "objectKey": "b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09.zip",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-southeast-2"
+        }
+      }
+    },
+    "7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068": {
+      "displayName": "ExtractFunction/Code",
+      "source": {
+        "path": "asset.7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-ap-southeast-2-34cce2ae": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2",
+          "objectKey": "7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068.zip",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-southeast-2"
+        }
+      }
+    },
+    "f608bebda1dd53cb8154e4e28bf3735ad8485d111872c25a808949b4011cfa42": {
+      "displayName": "CryptoMonitorStack Template",
+      "source": {
+        "path": "CryptoMonitorStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-ap-southeast-2-6b70e823": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2",
+          "objectKey": "f608bebda1dd53cb8154e4e28bf3735ad8485d111872c25a808949b4011cfa42.json",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-southeast-2"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
