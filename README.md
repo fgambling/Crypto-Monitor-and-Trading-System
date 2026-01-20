@@ -2,6 +2,12 @@
 
 Serverless ingest + visualization pipeline that turns social posts into structured crypto signals in real time. Built with AWS CDK, Lambda, API Gateway, DynamoDB, and a static dashboard on S3 + CloudFront.
 
+## Live architecture & demo post
+
+This project and its architecture are showcased in the following LinkedIn post (with screenshots of the system and dashboard):
+
+- [Real-time crypto monitoring and signal engine (LinkedIn post)](https://www.linkedin.com/posts/extrememind-studio_we-built-a-real-time-crypto-monitoring-and-activity-7419320674000855040-znv-?utm_source=share&utm_medium=member_desktop&rcm=ACoAAC9QnsoBWik7UWTkco0uCyp2phS2hRRvRG8)
+
 ## What it does
 - Ingest tweets/posts via `/ingest` and store in DynamoDB.
 - Query posts via `/posts` with pagination (`limit`, `nextToken`).
