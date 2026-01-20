@@ -1,19 +1,26 @@
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, TABLE_POSTS } from "../lib/db";
-import { PostEvent } from "../shared/types";
+import { IngestRecord } from "../shared/types";
 
 // Lambda/APIGW compatible handler.
-// Accepts a single PostEvent or an array of PostEvent.
+// Accepts a single IngestRecord or an array of IngestRecord.
 export const handler = async (event: any) => {
   const body = typeof event?.body === "string" ? JSON.parse(event.body) : (event?.body ?? event);
-  const posts: PostEvent[] = Array.isArray(body) ? body : [body];
+  const posts: IngestRecord[] = Array.isArray(body) ? body : [body];
 
   for (const post of posts) {
     const item = {
-      PK: `USER#${post.userId}`,
-      SK: `TS#${post.createdAt}#ID#${post.tweetId}`,
-      ...post,
-      processed: false
+      PK: `TWEET#${post.tweetId}`,
+      SK: `TICKER#${post.ticker}`,
+      GSI1PK: "POSTS",
+      GSI1SK: post.createdAt,
+      tweetId: post.tweetId,
+      username: post.username,
+      tweetContent: post.tweetContent,
+      createdAt: post.createdAt,
+      ticker: post.ticker,
+      contractAddress: post.contractAddress,
+      pairUrl: post.pairUrl
     };
     // Idempotency: ignore if exists
     await ddb.send(new PutCommand({

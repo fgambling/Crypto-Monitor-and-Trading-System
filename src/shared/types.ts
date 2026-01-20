@@ -1,11 +1,12 @@
-export interface PostEvent {
+export interface IngestRecord {
   tweetId: string;
-  userId: string;
   username: string;
-  text: string;
+  tweetContent: string;
   createdAt: string; // ISO
-  keywords?: string[];
-  sentiment?: string;
+  ticker: string;
+  contractAddress: string;
+  pairUrl: string;
+  [key: string]: unknown;
 }
 
 export interface TradeSignal {

@@ -1,67 +1,177 @@
-# Read-time Crypto Monitor and Trading System
+# Real-time Crypto Monitor and Trading System
 
-Serverless ingest + signal generation pipeline that turns social posts into simulated crypto trade signals in real time. Built to showcase event-driven architecture, AWS services, and TypeScript Lambda handlers.
+Serverless ingest + visualization pipeline that turns social posts into structured crypto signals in real time. Built with AWS CDK, Lambda, API Gateway, DynamoDB, and a static dashboard on S3 + CloudFront.
 
 ## What it does
-- Accepts tweets/posts via an API Gateway-style `/ingest` endpoint and stores them in DynamoDB.
-- Publishes each post to SQS, where an extractor looks up matching tokens (DexScreener) and emits trade signals.
-- Writes normalized signals to DynamoDB for downstream consumption (dashboards, trading engine).
-- Includes a local Express server for quick iteration and a CDK stack to deploy Lambdas, API Gateway, SQS, and table bindings.
+- Ingest tweets/posts via `/ingest` and store in DynamoDB.
+- Query posts via `/posts` with pagination (`limit`, `nextToken`).
+- Render a live dashboard (S3 + CloudFront) with search, filtering, and “Load more”.
+- Single-table DynamoDB design for downstream consumption; local Express server for quick dev.
 
-## System design
-- **API Gateway + Lambda (ingest):** Validates posts, saves to `Posts` table, pushes to SQS for async processing.
-- **SQS queue:** Buffers work to decouple ingest from extraction.
-- **Lambda (extract):** Parses keywords, queries DexScreener, filters by market cap/volume thresholds, and stores signals in `Signals` table.
-- **DynamoDB:** Two tables: `Posts` (PK: `USER#id`, SK: `TS#iso#ID#tweetId`) and `Signals` (PK: `TOKEN#address` or `SYMBOL#sym`, SK: `TS#iso`).
-- **Local dev server:** Express mirror of `/ingest` to test without API Gateway.
-- **Infrastructure as code:** `lib/crypto-monitor-stack.ts` provisions Lambdas, API, SQS, and connects to existing DynamoDB tables.
+## Architecture
+- **API Gateway + Lambda (ingest):** Validate payloads and write to `Posts`.
+- **API Gateway + Lambda (posts):** Read from `Posts` using GSI1, supports pagination.
+- **DynamoDB:** Table `Posts` with GSI1; PK `TWEET#tweetId`, SK `TICKER#ticker`.
+- **S3 + CloudFront:** Host the React dashboard.
+- **CDK:** `lib/crypto-monitor-stack.ts` provisions API, Lambdas, S3, CloudFront, and IAM.
 
-## Quick start (local)
-1) `cp .env.example .env` and set: `AWS_REGION`, `TABLE_POSTS`, `TABLE_SIGNALS`, `QUEUE_URL` (for local use, any string), optional `MARKET_CAP_MIN`, `VOLUME_MIN`.
-2) Install: `npm install`.
-3) Run local API: `npm run dev` (listens on `:3000`).
-4) Send a post:
+```
+n8n / External Source
+         ↓
+    POST /ingest
+         ↓
+   API Gateway → Ingest Lambda → DynamoDB (Posts)
+
+    GET /posts
+         ↓
+   API Gateway → Posts Lambda → DynamoDB (GSI1)
+         ↓
+   Dashboard (S3 + CloudFront)
+```
+
+## Local quick start
+1) `cp .env.example .env` and set `AWS_REGION`, `TABLE_POSTS`.
+2) Install deps: `npm install`.
+3) Run local API: `npm run dev` (serves `/ingest` and `/posts` on :3000).
+4) Test ingest:
    ```bash
    curl -X POST http://localhost:3000/ingest \
      -H "Content-Type: application/json" \
      -d '{
        "tweetId": "123",
-       "userId": "42",
        "username": "satoshi",
-       "text": "Buying $DOGE and PEPE today",
+       "tweetContent": "Buying $DOGE and PEPE today",
        "createdAt": "2024-01-01T00:00:00.000Z",
-       "keywords": ["doge", "pepe"]
+       "ticker": "DOGE",
+       "contractAddress": "0x0000000000000000000000000000000000000000",
+       "pairUrl": "https://dexscreener.com/bsc/0x0000000000000000000000000000000000000000"
      }'
    ```
 
-## Deploy (CDK)
-1) Install CDK toolchain: `npm i -D aws-cdk aws-cdk-lib constructs`.
-2) Bootstrap once per account/region: `npx cdk bootstrap`.
-3) Deploy: `npx cdk deploy`.
-   - Stack expects existing DynamoDB tables named `Posts` and `Signals`.
-   - Outputs include the ingest API URL and the SQS queue URL.
+## Deploy to AWS (CDK)
 
-## Configuration
-Environment variables used by Lambdas:
-- `AWS_REGION` (default `us-east-1` or `ap-southeast-2` locally)
-- `TABLE_POSTS`, `TABLE_SIGNALS` (DynamoDB table names)
-- `QUEUE_URL` (SQS queue for extract stage)
-- `MARKET_CAP_MIN` (USD floor to ignore micro-caps)
-- `VOLUME_MIN` (USD 24h volume floor)
+### Prerequisites
+- Node.js 20 (ts-node/esm is unstable on newer majors)
+- DynamoDB table `Posts` with GSI1 (`GSI1PK`, `GSI1SK`)
+- AWS credentials configured
+- CDK toolchain: `npm i -D aws-cdk aws-cdk-lib constructs`
+- Bootstrap once per account/region: `npx cdk bootstrap`
+
+### Full deployment
+```bash
+npm run build             # tsc -p .
+npm run deploy:dashboard  # cdk deploy (API + Lambdas + S3 + CloudFront)
+```
+Creates:
+- API Gateway: `/ingest` (POST), `/posts` (GET)
+- Lambdas: Ingest, Posts (pagination)
+- S3 bucket for dashboard, CloudFront distribution
+
+Outputs to note:
+```
+ApiUrl:          https://abc123.execute-api.ap-southeast-2.amazonaws.com/prod/
+DashboardUrl:    https://d1234567890.cloudfront.net
+IngestEndpoint:  https://abc123.execute-api.ap-southeast-2.amazonaws.com/prod/ingest
+PostsEndpoint:   https://abc123.execute-api.ap-southeast-2.amazonaws.com/prod/posts
+```
+
+### Configure dashboard after deploy
+```bash
+./scripts/update-dashboard-config.sh https://abc123.execute-api.ap-southeast-2.amazonaws.com/prod/
+npm run deploy   # redeploy to push updated config.js to S3/CloudFront
+```
+
+### Environment variables (Lambdas)
+- `AWS_REGION` (default `ap-southeast-2`)
+- `TABLE_POSTS` (default `Posts`)
+- `POSTS_LIMIT` (default `10`, server-side clamp 1–100)
+
+### IAM and DynamoDB
+- Table: `Posts`
+- GSI: `GSI1` (PK `GSI1PK`, SK `GSI1SK`)
+- Posts Lambda must have `dynamodb:Query` on `table/Posts/index/*` (CDK now adds this policy).
+
+## API reference
+
+### POST /ingest
+Ingest one or many posts.
+```json
+{
+  "tweetId": "123",
+  "username": "satoshi",
+  "tweetContent": "Buying $DOGE today",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "ticker": "DOGE",
+  "contractAddress": "0x0000000000000000000000000000000000000000",
+  "pairUrl": "https://dexscreener.com/bsc/0x0000"
+}
+```
+Response:
+```json
+{ "ok": true, "count": 1 }
+```
+
+### GET /posts
+Query posts with pagination.
+- `limit` (1–100, default 10)
+- `nextToken` (base64 of DynamoDB LastEvaluatedKey)
+
+Response:
+```json
+{
+  "ok": true,
+  "count": 20,
+  "items": [...],
+  "pagination": {
+    "limit": 20,
+    "hasMore": true,
+    "nextToken": "eyJ..."
+  }
+}
+```
+
+## Dashboard
+- `dashboard/config.js`: set `API_BASE_URL` to your ApiUrl (must end with `/prod/`).
+- Fetches `/posts?limit=20` with pagination (“Load more”).
+- UI: search, ticker/address badges, address links to `pairUrl`.
+- Hosted on S3 + CloudFront; wait 1–2 minutes after deploy or hard-refresh (Cmd+Shift+R / Ctrl+F5).
 
 ## Project structure
-- `src/ingest.ts`: Ingest Lambda (direct).
-- `src/extract.ts`: Extract Lambda with DexScreener lookup and filtering.
-- `src/handlers/*`: Lambda entrypoints packaged by CDK/tsup.
-- `src/lib/*`: DynamoDB client, symbol mapping, trade signal builder.
-- `src/local/server.ts`: Express wrapper for local `/ingest`.
-- `lib/crypto-monitor-stack.ts`: CDK stack wiring API Gateway, SQS, Lambdas, and table permissions.
+- `src/ingest.ts`: Ingest Lambda (direct entry).
+- `src/posts.ts`: Posts Lambda with pagination.
+- `src/handlers/ingest.ts`, `src/handlers/posts.ts`: CDK entrypoints for Lambdas.
+- `src/handlers/trade.ts`: placeholder.
+- `src/lib/*`: DynamoDB client, helpers.
+- `src/local/server.ts`: local Express mirror of `/ingest` + `/posts`.
+- `lib/crypto-monitor-stack.ts`: CDK stack (API, Lambdas, S3, CloudFront, IAM).
+- `dashboard/*`: React dashboard (htm + CDN React) with pagination.
+- `scripts/*`: Deploy/test helpers.
 
 ## Testing
-- `npm test` (Vitest). Tests are minimal; extend with unit coverage around mapping, DexScreener integration mocks, and DynamoDB persistence.
+- `npm run build`
+- `npx tsx scripts/test-ingest.ts`
+- `npx tsx scripts/test-query.ts`
+- `npm test` (Vitest; minimal tests, extend as needed)
 
-## Roadmap ideas
-- Add real price discovery and live trading adapter (e.g., Binance).
-- Expand sentiment/NER to improve keyword-to-token matching.
-- Add dashboards for signals and PnL, plus alerts.
-- Harden idempotency, retries, and observability (metrics/traces).
+## Troubleshooting
+- **Internal server error on /posts:** ensure Posts Lambda has `dynamodb:Query` on `table/Posts/index/*`; confirm GSI1 exists and TABLE_POSTS is correct.
+- **CORS in browser:** API responses must include `Access-Control-Allow-Origin:*`; avoid Lambda errors that fall back to API Gateway 4xx/5xx (those lack CORS by default). Add GatewayResponse CORS if needed.
+- **CloudFront still serving old assets:** wait 1–2 minutes or hard refresh; redeploy after updating `dashboard/config.js`.
+
+## Features
+- ✅ Real-time tweet ingestion with validation
+- ✅ Single-table DynamoDB design with composite keys
+- ✅ RESTful API for ingest and query operations
+- ✅ Pagination support (limit + nextToken)
+- ✅ Dashboard with search, filtering, and load-more
+- ✅ CloudFront CDN for global low-latency access
+- ✅ Idempotent writes to prevent duplicates
+- ✅ CORS-enabled for cross-origin requests
+- ✅ Infrastructure as code with AWS CDK
+
+## Roadmap
+- Implement trade signal generation in `trade.ts`.
+- Add date-range filtering and richer analytics.
+- Add auth (API keys or Cognito).
+- Add CloudWatch dashboards/alarms.
+- WebSocket / real-time updates.

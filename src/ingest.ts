@@ -1,33 +1,25 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { PostEvent } from "./shared/types";
+import { IngestRecord } from "./shared/types";
 
-const REGION = process.env.AWS_REGION ?? "us-east-1";
+const REGION = process.env.AWS_REGION ?? "ap-southeast-2";
 const TABLE_POSTS = process.env.TABLE_POSTS ?? "Posts";
-const QUEUE_URL = process.env.QUEUE_URL;
 
 const dynamo = DynamoDBDocumentClient.from(
   new DynamoDBClient({ region: REGION }),
   { marshallOptions: { removeUndefinedValues: true } }
 );
 
-const sqs = new SQSClient({ region: REGION });
-
 interface ApiGatewayEvent {
-  body?: string | PostEvent | PostEvent[];
+  body?: string | IngestRecord | IngestRecord[];
 }
 
-export const handler = async (event: ApiGatewayEvent | PostEvent | PostEvent[]) => {
-  let payload: PostEvent[];
+export const handler = async (event: ApiGatewayEvent | IngestRecord | IngestRecord[]) => {
+  let payload: IngestRecord[];
   try {
     payload = parsePayload(event);
   } catch (err) {
     return response(400, { ok: false, message: "Invalid JSON body", detail: serializeError(err) });
-  }
-
-  if (!QUEUE_URL) {
-    throw new Error("QUEUE_URL environment variable is not set");
   }
 
   if (payload.length === 0) {
@@ -43,27 +35,21 @@ export const handler = async (event: ApiGatewayEvent | PostEvent | PostEvent[]) 
   let processed = 0;
 
   for (const post of payload) {
-    const keywords = Array.isArray(post.keywords) ? post.keywords : [];
-    const enriched = { ...post, keywords };
-
     await dynamo.send(new PutCommand({
       TableName: TABLE_POSTS,
       Item: {
-        PK: `USER#${post.userId}`,
-        SK: `TWEET#${post.tweetId}`,
-        tweetId: enriched.tweetId,
-        userId: enriched.userId,
-        username: enriched.username,
-        text: enriched.text,
-        createdAt: enriched.createdAt,
-        keywords: enriched.keywords,
-        sentiment: enriched.sentiment
+        PK: `TWEET#${post.tweetId}`,
+        SK: `TICKER#${post.ticker}`,
+        GSI1PK: "POSTS",
+        GSI1SK: post.createdAt,
+        tweetId: post.tweetId,
+        username: post.username,
+        tweetContent: post.tweetContent,
+        createdAt: post.createdAt,
+        ticker: post.ticker,
+        contractAddress: post.contractAddress,
+        pairUrl: post.pairUrl
       }
-    }));
-
-    await sqs.send(new SendMessageCommand({
-      QueueUrl: QUEUE_URL,
-      MessageBody: JSON.stringify(enriched)
     }));
 
     processed += 1;
@@ -72,12 +58,12 @@ export const handler = async (event: ApiGatewayEvent | PostEvent | PostEvent[]) 
   return response(200, { ok: true, count: processed });
 };
 
-function parsePayload(event: ApiGatewayEvent | PostEvent | PostEvent[]): PostEvent[] {
+function parsePayload(event: ApiGatewayEvent | IngestRecord | IngestRecord[]): IngestRecord[] {
   if (Array.isArray(event)) {
     return event;
   }
 
-  if (isPostEvent(event)) {
+  if (isRecord(event)) {
     return [event];
   }
 
@@ -91,17 +77,17 @@ function parsePayload(event: ApiGatewayEvent | PostEvent | PostEvent[]): PostEve
   return normalizePosts(body);
 }
 
-function normalizePosts(value: unknown): PostEvent[] {
+function normalizePosts(value: unknown): IngestRecord[] {
   if (!value) {
     return [];
   }
 
-  return Array.isArray(value) ? value as PostEvent[] : [value as PostEvent];
+  return Array.isArray(value) ? value as IngestRecord[] : [value as IngestRecord];
 }
 
-function validatePost(post: PostEvent) {
+function validatePost(post: IngestRecord) {
   const record = post as unknown as Record<string, unknown>;
-  const required = ["tweetId", "userId", "username", "text", "createdAt"];
+  const required = ["tweetId", "username", "tweetContent", "createdAt", "ticker", "contractAddress", "pairUrl"];
   const missing = required.filter((key) => record[key] === undefined || record[key] === null || record[key] === "");
 
   if (missing.length > 0) {
@@ -109,8 +95,8 @@ function validatePost(post: PostEvent) {
   }
 }
 
-function isPostEvent(value: unknown): value is PostEvent {
-  return typeof value === "object" && !!value && "tweetId" in value && "userId" in value;
+function isRecord(value: unknown): value is IngestRecord {
+  return typeof value === "object" && !!value && "tweetId" in value && "ticker" in value;
 }
 
 function response(statusCode: number, payload: unknown) {

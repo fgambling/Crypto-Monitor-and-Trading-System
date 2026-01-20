@@ -14,16 +14,20 @@ import {
   Stack,
   StackProps,
   Duration,
-  CfnOutput
+  CfnOutput,
+  RemovalPolicy
 } from "aws-cdk-lib";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import {
   Table
 } from "aws-cdk-lib/aws-dynamodb";
-import { Queue } from "aws-cdk-lib/aws-sqs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
-import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
-import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import { LambdaIntegration, RestApi, Cors } from "aws-cdk-lib/aws-apigateway";
+import { Bucket, BlockPublicAccess } from "aws-cdk-lib/aws-s3";
+import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
+import { Distribution, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
+import { S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
 
 export class CryptoMonitorStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -31,23 +35,14 @@ export class CryptoMonitorStack extends Stack {
 
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-    // Reuse existing DynamoDB tables instead of creating new ones.
+    // Reuse existing DynamoDB table instead of creating a new one.
     const postsTable = Table.fromTableName(this, "PostsTable", "Posts");
-    const signalsTable = Table.fromTableName(this, "SignalsTable", "Signals");
-
-    const extractQueue = new Queue(this, "ExtractQueue", {
-      queueName: "ExtractQueue",
-      visibilityTimeout: Duration.seconds(60)
-    });
 
     const commonEnv = {
-      TABLE_POSTS: postsTable.tableName,
-      TABLE_SIGNALS: signalsTable.tableName,
-      QUEUE_URL: extractQueue.queueUrl,
-      MARKET_CAP_MIN: "500000",
-      VOLUME_MIN: "100000"
+      TABLE_POSTS: postsTable.tableName
     };
 
+    // === Lambda Functions ===
     const ingestFunction = new NodejsFunction(this, "IngestFunction", {
       entry: path.join(__dirname, "..", "src", "ingest.ts"),
       handler: "handler",
@@ -56,26 +51,37 @@ export class CryptoMonitorStack extends Stack {
       environment: commonEnv
     });
 
-    const extractFunction = new NodejsFunction(this, "ExtractFunction", {
-      entry: path.join(__dirname, "..", "src", "extract.ts"),
+    const postsFunction = new NodejsFunction(this, "PostsFunction", {
+      entry: path.join(__dirname, "..", "src", "posts.ts"),
       handler: "handler",
       runtime: Runtime.NODEJS_20_X,
-      timeout: Duration.seconds(30),
-      environment: commonEnv
+      timeout: Duration.seconds(10),
+      environment: {
+        ...commonEnv,
+        POSTS_LIMIT: "10"
+      }
     });
 
     postsTable.grantWriteData(ingestFunction);
-    signalsTable.grantReadWriteData(extractFunction);
+    postsTable.grantReadData(postsFunction);
 
-    extractQueue.grantSendMessages(ingestFunction);
-    extractQueue.grantConsumeMessages(extractFunction);
+    postsFunction.addToRolePolicy(new PolicyStatement({
+      actions: ["dynamodb:Query"],
+      resources: [
+        `arn:aws:dynamodb:${this.region}:${this.account}:table/${postsTable.tableName}/index/*`
+      ]
+    }));
 
-    extractFunction.addEventSource(new SqsEventSource(extractQueue));
-
+    // === API Gateway ===
     const api = new RestApi(this, "CryptoMonitorApi", {
       restApiName: "CryptoMonitor",
       deployOptions: {
         stageName: "prod"
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: Cors.ALL_ORIGINS,
+        allowMethods: Cors.ALL_METHODS,
+        allowHeaders: ["Content-Type", "Authorization"]
       }
     });
 
@@ -84,14 +90,64 @@ export class CryptoMonitorStack extends Stack {
       proxy: true
     }));
 
-    new CfnOutput(this, "ApiUrl", {
-      value: api.url,
-      description: "Invoke URL for the ingest endpoint"
+    const postsResource = api.root.addResource("posts");
+    postsResource.addMethod("GET", new LambdaIntegration(postsFunction, {
+      proxy: true
+    }));
+
+    // === S3 Bucket for Dashboard ===
+    const dashboardBucket = new Bucket(this, "DashboardBucket", {
+      websiteIndexDocument: "index.html",
+      websiteErrorDocument: "index.html",
+      publicReadAccess: false,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true
     });
 
-    new CfnOutput(this, "ExtractQueueUrl", {
-      value: extractQueue.queueUrl,
-      description: "SQS queue URL for post ingestion"
+    // === CloudFront Distribution ===
+    const distribution = new Distribution(this, "DashboardDistribution", {
+      defaultBehavior: {
+        origin: S3BucketOrigin.withOriginAccessControl(dashboardBucket),
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      },
+      defaultRootObject: "index.html",
+      errorResponses: [
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: "/index.html"
+        }
+      ]
+    });
+
+    // === Deploy Dashboard Files ===
+    new BucketDeployment(this, "DeployDashboard", {
+      sources: [Source.asset(path.join(__dirname, "..", "dashboard"))],
+      destinationBucket: dashboardBucket,
+      distribution,
+      distributionPaths: ["/*"]
+    });
+
+    // === Outputs ===
+    new CfnOutput(this, "ApiUrl", {
+      value: api.url,
+      description: "API Gateway endpoint URL"
+    });
+
+    new CfnOutput(this, "DashboardUrl", {
+      value: `https://${distribution.distributionDomainName}`,
+      description: "CloudFront dashboard URL"
+    });
+
+    new CfnOutput(this, "IngestEndpoint", {
+      value: `${api.url}ingest`,
+      description: "POST endpoint for ingesting tweets"
+    });
+
+    new CfnOutput(this, "PostsEndpoint", {
+      value: `${api.url}posts`,
+      description: "GET endpoint for querying posts"
     });
   }
 }

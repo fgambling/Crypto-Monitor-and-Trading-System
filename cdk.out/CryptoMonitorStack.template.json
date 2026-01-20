@@ -1,17 +1,5 @@
 {
  "Resources": {
-  "ExtractQueue83C1B7E4": {
-   "Type": "AWS::SQS::Queue",
-   "Properties": {
-    "QueueName": "ExtractQueue",
-    "VisibilityTimeout": 60
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "CryptoMonitorStack/ExtractQueue/Resource"
-   }
-  },
   "IngestFunctionServiceRole55EB4427": {
    "Type": "AWS::IAM::Role",
    "Properties": {
@@ -60,39 +48,20 @@
         "dynamodb:DescribeTable"
        ],
        "Effect": "Allow",
-       "Resource": [
-        {
-         "Fn::Join": [
-          "",
-          [
-           "arn:",
-           {
-            "Ref": "AWS::Partition"
-           },
-           ":dynamodb:ap-southeast-2:",
-           {
-            "Ref": "AWS::AccountId"
-           },
-           ":table/Posts"
-          ]
-         ]
-        },
-        {
-         "Ref": "AWS::NoValue"
-        }
-       ]
-      },
-      {
-       "Action": [
-        "sqs:SendMessage",
-        "sqs:GetQueueAttributes",
-        "sqs:GetQueueUrl"
-       ],
-       "Effect": "Allow",
        "Resource": {
-        "Fn::GetAtt": [
-         "ExtractQueue83C1B7E4",
-         "Arn"
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:ap-southeast-2:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":table/Posts"
+         ]
         ]
        }
       }
@@ -117,17 +86,11 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
      },
-     "S3Key": "b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09.zip"
+     "S3Key": "dbbb5493c0723494f3ef0ac4db56708a603cf3c63bbde04eb8f57bf7254bb8d4.zip"
     },
     "Environment": {
      "Variables": {
-      "TABLE_POSTS": "Posts",
-      "TABLE_SIGNALS": "Signals",
-      "QUEUE_URL": {
-       "Ref": "ExtractQueue83C1B7E4"
-      },
-      "MARKET_CAP_MIN": "500000",
-      "VOLUME_MIN": "100000"
+      "TABLE_POSTS": "Posts"
      }
     },
     "Handler": "index.handler",
@@ -146,12 +109,12 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CryptoMonitorStack/IngestFunction/Resource",
-    "aws:asset:path": "asset.b0fadb9fada815228df4373c60b3366875a1568ce298a17bbaad77fbe2333d09",
+    "aws:asset:path": "asset.dbbb5493c0723494f3ef0ac4db56708a603cf3c63bbde04eb8f57bf7254bb8d4",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
   },
-  "ExtractFunctionServiceRole4660E294": {
+  "PostsFunctionServiceRoleF2DB8406": {
    "Type": "AWS::IAM::Role",
    "Properties": {
     "AssumeRolePolicyDocument": {
@@ -182,10 +145,10 @@
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/ServiceRole/Resource"
+    "aws:cdk:path": "CryptoMonitorStack/PostsFunction/ServiceRole/Resource"
    }
   },
-  "ExtractFunctionServiceRoleDefaultPolicy39BDF15D": {
+  "PostsFunctionServiceRoleDefaultPolicyACA3B729": {
    "Type": "AWS::IAM::Policy",
    "Properties": {
     "PolicyDocument": {
@@ -193,127 +156,117 @@
       {
        "Action": [
         "dynamodb:BatchGetItem",
-        "dynamodb:GetRecords",
-        "dynamodb:GetShardIterator",
         "dynamodb:Query",
         "dynamodb:GetItem",
         "dynamodb:Scan",
         "dynamodb:ConditionCheckItem",
-        "dynamodb:BatchWriteItem",
-        "dynamodb:PutItem",
-        "dynamodb:UpdateItem",
-        "dynamodb:DeleteItem",
         "dynamodb:DescribeTable"
        ],
        "Effect": "Allow",
-       "Resource": [
-        {
-         "Fn::Join": [
-          "",
-          [
-           "arn:",
-           {
-            "Ref": "AWS::Partition"
-           },
-           ":dynamodb:ap-southeast-2:",
-           {
-            "Ref": "AWS::AccountId"
-           },
-           ":table/Signals"
-          ]
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:ap-southeast-2:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":table/Posts"
          ]
-        },
-        {
-         "Ref": "AWS::NoValue"
-        }
-       ]
+        ]
+       }
       },
       {
        "Action": [
-        "sqs:ReceiveMessage",
-        "sqs:ChangeMessageVisibility",
-        "sqs:GetQueueUrl",
-        "sqs:DeleteMessage",
-        "sqs:GetQueueAttributes"
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
        ],
        "Effect": "Allow",
        "Resource": {
-        "Fn::GetAtt": [
-         "ExtractQueue83C1B7E4",
-         "Arn"
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":dynamodb:ap-southeast-2:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":table/Posts"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "dynamodb:Query",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:dynamodb:ap-southeast-2:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":table/Posts/index/*"
+         ]
         ]
        }
       }
      ],
      "Version": "2012-10-17"
     },
-    "PolicyName": "ExtractFunctionServiceRoleDefaultPolicy39BDF15D",
+    "PolicyName": "PostsFunctionServiceRoleDefaultPolicyACA3B729",
     "Roles": [
      {
-      "Ref": "ExtractFunctionServiceRole4660E294"
+      "Ref": "PostsFunctionServiceRoleF2DB8406"
      }
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/ServiceRole/DefaultPolicy/Resource"
+    "aws:cdk:path": "CryptoMonitorStack/PostsFunction/ServiceRole/DefaultPolicy/Resource"
    }
   },
-  "ExtractFunctionABD5F5B5": {
+  "PostsFunction3DC4AEDB": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
      },
-     "S3Key": "7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068.zip"
+     "S3Key": "b0599c0d607b32394fc5b54e30a5a13122f5e7ca6f990a68a6ba2333cfcd31cc.zip"
     },
     "Environment": {
      "Variables": {
       "TABLE_POSTS": "Posts",
-      "TABLE_SIGNALS": "Signals",
-      "QUEUE_URL": {
-       "Ref": "ExtractQueue83C1B7E4"
-      },
-      "MARKET_CAP_MIN": "500000",
-      "VOLUME_MIN": "100000"
+      "POSTS_LIMIT": "10"
      }
     },
     "Handler": "index.handler",
     "Role": {
      "Fn::GetAtt": [
-      "ExtractFunctionServiceRole4660E294",
+      "PostsFunctionServiceRoleF2DB8406",
       "Arn"
      ]
     },
     "Runtime": "nodejs20.x",
-    "Timeout": 30
+    "Timeout": 10
    },
    "DependsOn": [
-    "ExtractFunctionServiceRoleDefaultPolicy39BDF15D",
-    "ExtractFunctionServiceRole4660E294"
+    "PostsFunctionServiceRoleDefaultPolicyACA3B729",
+    "PostsFunctionServiceRoleF2DB8406"
    ],
    "Metadata": {
-    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/Resource",
-    "aws:asset:path": "asset.7c7f6861d2b83d108b52a91907d9de9faf2187503777bf067a2a5f7742d82068",
+    "aws:cdk:path": "CryptoMonitorStack/PostsFunction/Resource",
+    "aws:asset:path": "asset.b0599c0d607b32394fc5b54e30a5a13122f5e7ca6f990a68a6ba2333cfcd31cc",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
-   }
-  },
-  "ExtractFunctionSqsEventSourceCryptoMonitorStackExtractQueue97DC5267CBD90D8A": {
-   "Type": "AWS::Lambda::EventSourceMapping",
-   "Properties": {
-    "EventSourceArn": {
-     "Fn::GetAtt": [
-      "ExtractQueue83C1B7E4",
-      "Arn"
-     ]
-    },
-    "FunctionName": {
-     "Ref": "ExtractFunctionABD5F5B5"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "CryptoMonitorStack/ExtractFunction/SqsEventSource:CryptoMonitorStackExtractQueue97DC5267/Resource"
    }
   },
   "CryptoMonitorApi0DB8F5B2": {
@@ -380,7 +333,7 @@
     "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Account"
    }
   },
-  "CryptoMonitorApiDeployment7B2F7B31970e3985dbaaba7ed1b8464846f5e256": {
+  "CryptoMonitorApiDeployment7B2F7B315cc5e5fb4e56dee205eb0833f11c5d94": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Automatically created by the RestApi construct",
@@ -389,8 +342,13 @@
     }
    },
    "DependsOn": [
+    "CryptoMonitorApiingestOPTIONS60BE3C37",
     "CryptoMonitorApiingestPOST2423D738",
-    "CryptoMonitorApiingestDB74D2C8"
+    "CryptoMonitorApiingestDB74D2C8",
+    "CryptoMonitorApiOPTIONS1BB5C848",
+    "CryptoMonitorApipostsGETF1225328",
+    "CryptoMonitorApipostsOPTIONS5F66DAD0",
+    "CryptoMonitorApipostsE4EA9C3D"
    ],
    "Metadata": {
     "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Deployment/Resource",
@@ -401,7 +359,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "CryptoMonitorApiDeployment7B2F7B31970e3985dbaaba7ed1b8464846f5e256"
+     "Ref": "CryptoMonitorApiDeployment7B2F7B315cc5e5fb4e56dee205eb0833f11c5d94"
     },
     "RestApiId": {
      "Ref": "CryptoMonitorApi0DB8F5B2"
@@ -413,6 +371,52 @@
    ],
    "Metadata": {
     "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/DeploymentStage.prod/Resource"
+   }
+  },
+  "CryptoMonitorApiOPTIONS1BB5C848": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "CryptoMonitorApi0DB8F5B2",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/OPTIONS/Resource"
    }
   },
   "CryptoMonitorApiingestDB74D2C8": {
@@ -431,6 +435,49 @@
    },
    "Metadata": {
     "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/Resource"
+   }
+  },
+  "CryptoMonitorApiingestOPTIONS60BE3C37": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "CryptoMonitorApiingestDB74D2C8"
+    },
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/OPTIONS/Resource"
    }
   },
   "CryptoMonitorApiingestPOSTApiPermissionCryptoMonitorStackCryptoMonitorApi18B4E178POSTingest1D2342D5": {
@@ -548,10 +595,697 @@
     "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/ingest/POST/Resource"
    }
   },
+  "CryptoMonitorApipostsE4EA9C3D": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "CryptoMonitorApi0DB8F5B2",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "posts",
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/posts/Resource"
+   }
+  },
+  "CryptoMonitorApipostsOPTIONS5F66DAD0": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "CryptoMonitorApipostsE4EA9C3D"
+    },
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/posts/OPTIONS/Resource"
+   }
+  },
+  "CryptoMonitorApipostsGETApiPermissionCryptoMonitorStackCryptoMonitorApi18B4E178GETpostsB7D0A120": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PostsFunction3DC4AEDB",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:ap-southeast-2:",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CryptoMonitorApi0DB8F5B2"
+       },
+       "/",
+       {
+        "Ref": "CryptoMonitorApiDeploymentStageprod1375723F"
+       },
+       "/GET/posts"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/posts/GET/ApiPermission.CryptoMonitorStackCryptoMonitorApi18B4E178.GET..posts"
+   }
+  },
+  "CryptoMonitorApipostsGETApiPermissionTestCryptoMonitorStackCryptoMonitorApi18B4E178GETpostsFF24BE7B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PostsFunction3DC4AEDB",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:ap-southeast-2:",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CryptoMonitorApi0DB8F5B2"
+       },
+       "/test-invoke-stage/GET/posts"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/posts/GET/ApiPermission.Test.CryptoMonitorStackCryptoMonitorApi18B4E178.GET..posts"
+   }
+  },
+  "CryptoMonitorApipostsGETF1225328": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:ap-southeast-2:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "PostsFunction3DC4AEDB",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "CryptoMonitorApipostsE4EA9C3D"
+    },
+    "RestApiId": {
+     "Ref": "CryptoMonitorApi0DB8F5B2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/CryptoMonitorApi/Default/posts/GET/Resource"
+   }
+  },
+  "DashboardBucket5758873D": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     },
+     {
+      "Key": "aws-cdk:cr-owned:5bfba3d9",
+      "Value": "true"
+     }
+    ],
+    "WebsiteConfiguration": {
+     "ErrorDocument": "index.html",
+     "IndexDocument": "index.html"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DashboardBucket/Resource"
+   }
+  },
+  "DashboardBucketPolicy899268BC": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "DashboardBucket5758873D"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DashboardBucket5758873D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DashboardBucket5758873D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "s3:GetObject",
+       "Condition": {
+        "StringEquals": {
+         "AWS:SourceArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":cloudfront::",
+            {
+             "Ref": "AWS::AccountId"
+            },
+            ":distribution/",
+            {
+             "Ref": "DashboardDistributionD4569E0E"
+            }
+           ]
+          ]
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "cloudfront.amazonaws.com"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "DashboardBucket5758873D",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DashboardBucket/Policy/Resource"
+   }
+  },
+  "DashboardBucketAutoDeleteObjectsCustomResource0A022D13": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "DashboardBucket5758873D"
+    }
+   },
+   "DependsOn": [
+    "DashboardBucketPolicy899268BC"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DashboardBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+     },
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "DashboardBucket5758873D"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "DashboardDistributionOrigin1S3OriginAccessControlBA44AE78": {
+   "Type": "AWS::CloudFront::OriginAccessControl",
+   "Properties": {
+    "OriginAccessControlConfig": {
+     "Name": "CryptoMonitorStackDashboardDOrigin1S3OriginAccessControlF8DC00D5",
+     "OriginAccessControlOriginType": "s3",
+     "SigningBehavior": "always",
+     "SigningProtocol": "sigv4"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DashboardDistribution/Origin1/S3OriginAccessControl/Resource"
+   }
+  },
+  "DashboardDistributionD4569E0E": {
+   "Type": "AWS::CloudFront::Distribution",
+   "Properties": {
+    "DistributionConfig": {
+     "CustomErrorResponses": [
+      {
+       "ErrorCode": 404,
+       "ResponseCode": 200,
+       "ResponsePagePath": "/index.html"
+      }
+     ],
+     "DefaultCacheBehavior": {
+      "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+      "Compress": true,
+      "TargetOriginId": "CryptoMonitorStackDashboardDistributionOrigin1D493A201",
+      "ViewerProtocolPolicy": "redirect-to-https"
+     },
+     "DefaultRootObject": "index.html",
+     "Enabled": true,
+     "HttpVersion": "http2",
+     "IPV6Enabled": true,
+     "Origins": [
+      {
+       "DomainName": {
+        "Fn::GetAtt": [
+         "DashboardBucket5758873D",
+         "RegionalDomainName"
+        ]
+       },
+       "Id": "CryptoMonitorStackDashboardDistributionOrigin1D493A201",
+       "OriginAccessControlId": {
+        "Fn::GetAtt": [
+         "DashboardDistributionOrigin1S3OriginAccessControlBA44AE78",
+         "Id"
+        ]
+       },
+       "S3OriginConfig": {
+        "OriginAccessIdentity": ""
+       }
+      }
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DashboardDistribution/Resource"
+   }
+  },
+  "DeployDashboardAwsCliLayer3969B9EF": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "Content": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+     },
+     "S3Key": "c82567645316e1499ecd064c937f1183bb4a74e95800ff64fab4d308451ba5f0.zip"
+    },
+    "Description": "/opt/awscli/aws"
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DeployDashboard/AwsCliLayer/Resource",
+    "aws:asset:path": "asset.c82567645316e1499ecd064c937f1183bb4a74e95800ff64fab4d308451ba5f0.zip",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Content"
+   }
+  },
+  "DeployDashboardCustomResource344C383B": {
+   "Type": "Custom::CDKBucketDeployment",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+      "Arn"
+     ]
+    },
+    "SourceBucketNames": [
+     {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+     }
+    ],
+    "SourceObjectKeys": [
+     "0d7796a5e857395786baa57cd0d182c82cb400f89f925a6537e36ca7ed379d1a.zip"
+    ],
+    "DestinationBucketName": {
+     "Ref": "DashboardBucket5758873D"
+    },
+    "WaitForDistributionInvalidation": true,
+    "Prune": true,
+    "DistributionId": {
+     "Ref": "DashboardDistributionD4569E0E"
+    },
+    "DistributionPaths": [
+     "/*"
+    ],
+    "OutputObjectKeys": true
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/DeployDashboard/CustomResource/Default"
+   }
+  },
+  "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource"
+   }
+  },
+  "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":s3:::",
+           {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":s3:::",
+           {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DashboardBucket5758873D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DashboardBucket5758873D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "cloudfront:GetInvalidation",
+        "cloudfront:CreateInvalidation"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+    "Roles": [
+     {
+      "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+     },
+     "S3Key": "3423a042b818e31c1e34a19d6689ab2e5f9b70fcbe9e71df66f241b20a200bd9.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
+     }
+    },
+    "Handler": "index.handler",
+    "Layers": [
+     {
+      "Ref": "DeployDashboardAwsCliLayer3969B9EF"
+     }
+    ],
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.13",
+    "Timeout": 900
+   },
+   "DependsOn": [
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource",
+    "aws:asset:path": "asset.3423a042b818e31c1e34a19d6689ab2e5f9b70fcbe9e71df66f241b20a200bd9",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/21Ry1LDMAz8Fu6u6ASGe8rjVigt94ziiNR52CGy28lk/O/YTqEcOGm1412t5AyybA3rGzzzSlbtqlMlzAeLshWBKuZq0tibqoQPLDvaIJPgL4b53ZEj8fipE/Ciw76ssNCmoobhNZUXp6VVRguFPcx70yVBqjvTKTnFdkFe8F2BzGQZ8lhCDxsnW7Jp5mIPcxD8uj6fSNuDcaOkLQ6D0nX0+5/d0dgr5iDzAgdVo6UzTiEUsc0HlXJdYS6lcdqKJxo6M/XBMLJ/unCgOi2zgCBNA1PUn+biueAt2aOpIrUg76/v0r7R6JL1zdnBWS/iLaHh21N2Dw/hixpWajWGXKon2C/1GypkHNu/AQAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/3VSTW/CMAz9LdxDtoE2accC2mkfCKZdUZqYzpA2VZyAqqr/fUlaKJq2k5+/4ucXz/hs/sgfJuJMU6mOU405b7dOyCMLoV2rmkqURuX8U+QaFoKAaVHmSuwqo+BA/D2ZF19Jh6ZiKErebowGttxXya6NRtlEt0cdo/muFUTgiGfRMAW1Nk0JleMLL4/gVtdArOZtH03TexifG1Bvxim3fjeQ5W1IXDlGKmBLJBq8V9GA/QKb/C1WhQZnxvoL6JiosRAOzqIJSwK5rMa05wgzKY2vHBs3iNEbL2hbJHF6EFqNt7JX9g3ct1ExOaBLdhiScMekNl7trQlytSskZzH3ieh2/mGxwEgCiJahwBode/8J3zZ33Tgt/UrkF6RI7d7VPiziyZnyL06/UmtrTqjA3p6Ljhrvwk1JjTw701Jjkr1j8ZD4ge5Os3v+8MyfJgdCnNqgIpbAN739AdRWNHKoAgAA"
    },
    "Metadata": {
     "aws:cdk:path": "CryptoMonitorStack/CDKMetadata/Default"
@@ -582,7 +1316,7 @@
    }
   },
   "ApiUrl": {
-   "Description": "Invoke URL for the ingest endpoint",
+   "Description": "API Gateway endpoint URL",
    "Value": {
     "Fn::Join": [
      "",
@@ -604,10 +1338,67 @@
     ]
    }
   },
-  "ExtractQueueUrl": {
-   "Description": "SQS queue URL for post ingestion",
+  "DashboardUrl": {
+   "Description": "CloudFront dashboard URL",
    "Value": {
-    "Ref": "ExtractQueue83C1B7E4"
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Fn::GetAtt": [
+        "DashboardDistributionD4569E0E",
+        "DomainName"
+       ]
+      }
+     ]
+    ]
+   }
+  },
+  "IngestEndpoint": {
+   "Description": "POST endpoint for ingesting tweets",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "CryptoMonitorApi0DB8F5B2"
+      },
+      ".execute-api.ap-southeast-2.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "CryptoMonitorApiDeploymentStageprod1375723F"
+      },
+      "/ingest"
+     ]
+    ]
+   }
+  },
+  "PostsEndpoint": {
+   "Description": "GET endpoint for querying posts",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "CryptoMonitorApi0DB8F5B2"
+      },
+      ".execute-api.ap-southeast-2.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "CryptoMonitorApiDeploymentStageprod1375723F"
+      },
+      "/posts"
+     ]
+    ]
    }
   }
  },

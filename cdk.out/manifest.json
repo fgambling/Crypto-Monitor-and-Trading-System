@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-southeast-2",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-southeast-2",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/f608bebda1dd53cb8154e4e28bf3735ad8485d111872c25a808949b4011cfa42.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/3512c2752c85eec184d54558201b8b5772261e865e0bf0dbb5623756f0bc4dea.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -34,12 +34,6 @@
         "CryptoMonitorStack.assets"
       ],
       "metadata": {
-        "/CryptoMonitorStack/ExtractQueue/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ExtractQueue83C1B7E4"
-          }
-        ],
         "/CryptoMonitorStack/IngestFunction/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -58,28 +52,22 @@
             "data": "IngestFunction4B2F2EB2"
           }
         ],
-        "/CryptoMonitorStack/ExtractFunction/ServiceRole/Resource": [
+        "/CryptoMonitorStack/PostsFunction/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ExtractFunctionServiceRole4660E294"
+            "data": "PostsFunctionServiceRoleF2DB8406"
           }
         ],
-        "/CryptoMonitorStack/ExtractFunction/ServiceRole/DefaultPolicy/Resource": [
+        "/CryptoMonitorStack/PostsFunction/ServiceRole/DefaultPolicy/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ExtractFunctionServiceRoleDefaultPolicy39BDF15D"
+            "data": "PostsFunctionServiceRoleDefaultPolicyACA3B729"
           }
         ],
-        "/CryptoMonitorStack/ExtractFunction/Resource": [
+        "/CryptoMonitorStack/PostsFunction/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ExtractFunctionABD5F5B5"
-          }
-        ],
-        "/CryptoMonitorStack/ExtractFunction/SqsEventSource:CryptoMonitorStackExtractQueue97DC5267/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ExtractFunctionSqsEventSourceCryptoMonitorStackExtractQueue97DC5267CBD90D8A"
+            "data": "PostsFunction3DC4AEDB"
           }
         ],
         "/CryptoMonitorStack/CryptoMonitorApi/Resource": [
@@ -103,7 +91,7 @@
         "/CryptoMonitorStack/CryptoMonitorApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "CryptoMonitorApiDeployment7B2F7B31970e3985dbaaba7ed1b8464846f5e256"
+            "data": "CryptoMonitorApiDeployment7B2F7B315cc5e5fb4e56dee205eb0833f11c5d94"
           }
         ],
         "/CryptoMonitorStack/CryptoMonitorApi/DeploymentStage.prod/Resource": [
@@ -118,10 +106,22 @@
             "data": "CryptoMonitorApiEndpointA53428F7"
           }
         ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApiOPTIONS1BB5C848"
+          }
+        ],
         "/CryptoMonitorStack/CryptoMonitorApi/Default/ingest/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CryptoMonitorApiingestDB74D2C8"
+          }
+        ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/ingest/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApiingestOPTIONS60BE3C37"
           }
         ],
         "/CryptoMonitorStack/CryptoMonitorApi/Default/ingest/POST/ApiPermission.CryptoMonitorStackCryptoMonitorApi18B4E178.POST..ingest": [
@@ -142,16 +142,146 @@
             "data": "CryptoMonitorApiingestPOST2423D738"
           }
         ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/posts/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApipostsE4EA9C3D"
+          }
+        ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/posts/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApipostsOPTIONS5F66DAD0"
+          }
+        ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/posts/GET/ApiPermission.CryptoMonitorStackCryptoMonitorApi18B4E178.GET..posts": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApipostsGETApiPermissionCryptoMonitorStackCryptoMonitorApi18B4E178GETpostsB7D0A120"
+          }
+        ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/posts/GET/ApiPermission.Test.CryptoMonitorStackCryptoMonitorApi18B4E178.GET..posts": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApipostsGETApiPermissionTestCryptoMonitorStackCryptoMonitorApi18B4E178GETpostsFF24BE7B"
+          }
+        ],
+        "/CryptoMonitorStack/CryptoMonitorApi/Default/posts/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CryptoMonitorApipostsGETF1225328"
+          }
+        ],
+        "/CryptoMonitorStack/DashboardBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardBucket5758873D"
+          }
+        ],
+        "/CryptoMonitorStack/DashboardBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardBucketPolicy899268BC"
+          }
+        ],
+        "/CryptoMonitorStack/DashboardBucket/AutoDeleteObjectsCustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardBucketAutoDeleteObjectsCustomResource0A022D13"
+          }
+        ],
+        "/CryptoMonitorStack/Custom::S3AutoDeleteObjectsCustomResourceProvider": [
+          {
+            "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+            "data": true
+          }
+        ],
+        "/CryptoMonitorStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+          }
+        ],
+        "/CryptoMonitorStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+          }
+        ],
+        "/CryptoMonitorStack/DashboardDistribution/Origin1/S3OriginAccessControl/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardDistributionOrigin1S3OriginAccessControlBA44AE78"
+          }
+        ],
+        "/CryptoMonitorStack/DashboardDistribution/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardDistributionD4569E0E"
+          }
+        ],
+        "/CryptoMonitorStack/DeployDashboard/AwsCliLayer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DeployDashboardAwsCliLayer3969B9EF"
+          }
+        ],
+        "/CryptoMonitorStack/DeployDashboard/CustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DeployDashboardCustomResource344C383B"
+          }
+        ],
+        "/CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C": [
+          {
+            "type": "aws:cdk:is-custom-resource-handler-singleton",
+            "data": true
+          },
+          {
+            "type": "aws:cdk:is-custom-resource-handler-runtime-family",
+            "data": 2
+          }
+        ],
+        "/CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
+          }
+        ],
+        "/CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF"
+          }
+        ],
+        "/CryptoMonitorStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536"
+          }
+        ],
         "/CryptoMonitorStack/ApiUrl": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiUrl"
           }
         ],
-        "/CryptoMonitorStack/ExtractQueueUrl": [
+        "/CryptoMonitorStack/DashboardUrl": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ExtractQueueUrl"
+            "data": "DashboardUrl"
+          }
+        ],
+        "/CryptoMonitorStack/IngestEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "IngestEndpoint"
+          }
+        ],
+        "/CryptoMonitorStack/PostsEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PostsEndpoint"
           }
         ],
         "/CryptoMonitorStack/CDKMetadata/Default": [
@@ -301,7 +431,7 @@
           },
           "@aws-cdk/aws-iam:importedRoleStackSafeDefaultPolicyName": {
             "recommendedValue": true,
-            "explanation": "Enable this feature to by default create default policy names for imported roles that depend on the stack the role is in."
+            "explanation": "Enable this feature to create default policy names for imported roles that depend on the stack the role is in."
           },
           "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": {
             "recommendedValue": true,
@@ -453,14 +583,6 @@
             "recommendedValue": true,
             "explanation": "When enabled, stack tags need to be assigned explicitly on a Stack."
           },
-          "@aws-cdk/aws-ecs:enableImdsBlockingDeprecatedFeature": {
-            "recommendedValue": false,
-            "explanation": "When set to true along with canContainersAccessInstanceRole=false in ECS cluster, new updated commands will be added to UserData to block container accessing IMDS. **Applicable to Linux only. IMPORTANT: See [details.](#aws-cdkaws-ecsenableImdsBlockingDeprecatedFeature)**"
-          },
-          "@aws-cdk/aws-ecs:disableEcsImdsBlocking": {
-            "recommendedValue": true,
-            "explanation": "When set to true, CDK synth will throw exception if canContainersAccessInstanceRole is false. **IMPORTANT: See [details.](#aws-cdkaws-ecsdisableEcsImdsBlocking)**"
-          },
           "@aws-cdk/aws-ecs:reduceEc2FargateCloudWatchPermissions": {
             "recommendedValue": true,
             "explanation": "When enabled, we will only grant the necessary permissions when users specify cloudwatch log group through logConfiguration"
@@ -581,10 +703,29 @@
           "@aws-cdk/aws-lambda:useCdkManagedLogGroup": {
             "recommendedValue": true,
             "explanation": "When enabled, CDK creates and manages loggroup for the lambda function"
+          },
+          "@aws-cdk/aws-elasticloadbalancingv2:networkLoadBalancerWithSecurityGroupByDefault": {
+            "recommendedValue": true,
+            "explanation": "When enabled, Network Load Balancer will be created with a security group by default."
+          },
+          "@aws-cdk/aws-stepfunctions-tasks:httpInvokeDynamicJsonPathEndpoint": {
+            "recommendedValue": true,
+            "explanation": "When enabled, allows using a dynamic apiEndpoint with JSONPath format in HttpInvoke tasks.",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-ecs-patterns:uniqueTargetGroupId": {
+            "recommendedValue": true,
+            "explanation": "When enabled, ECS patterns will generate unique target group IDs to prevent conflicts during load balancer replacement"
+          },
+          "@aws-cdk/aws-route53-patterns:useDistribution": {
+            "recommendedValue": true,
+            "explanation": "Use the `Distribution` resource instead of `CloudFrontWebDistribution`"
           }
         }
       }
     }
   },
-  "minimumCliVersion": "2.1030.0"
+  "minimumCliVersion": "2.1033.0"
 }

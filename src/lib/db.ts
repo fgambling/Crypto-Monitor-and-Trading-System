@@ -9,4 +9,3 @@ export const ddb = DynamoDBDocumentClient.from(client, {
 });
 
 export const TABLE_POSTS = process.env.TABLE_POSTS || "Posts";
-export const TABLE_SIGNALS = process.env.TABLE_SIGNALS || "Signals";

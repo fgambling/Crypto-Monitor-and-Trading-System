@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "node --loader ts-node/esm --experimental-specifier-resolution=node src/local/server.ts",
     "build": "tsc -p .",
-    "cdk:deploy": "cdk deploy",
+    "deploy": "cdk deploy",
+    "deploy:dashboard": "cdk deploy --outputs-file cdk-outputs.json",
+    "cdk:synth": "cdk synth",
+    "cdk:diff": "cdk diff",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "echo \"(add eslint/prettier later)\""
@@ -38,7 +41,7 @@
   "tsup": {
     "entry": [
       "src/handlers/ingest.ts",
-      "src/handlers/extract.ts",
+      "src/posts.ts",
       "src/handlers/trade.ts",
       "src/local/server.ts"
     ],

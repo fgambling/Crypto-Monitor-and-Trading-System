@@ -1,0 +1,29 @@
+[
+  {
+    "tweetId": "t-1007",
+    "username": "satoshi",
+    "tweetContent": "Watching FLOKI volume spike again. Looks like meme rotation is back.",
+    "createdAt": "2025-01-10T08:41:12.000Z",
+    "ticker": "FLOKI",
+    "contractAddress": "0xfb5B838b6cfEEdC2873aB27866079AC55363D37E",
+    "pairUrl": "https://dexscreener.com/bsc/0x231d9e7181e8479a8b40930961e93e7ed798542c"
+  },
+  {
+    "tweetId": "t-1006",
+    "username": "altwatch",
+    "tweetContent": "PEPE caught a bid. Liquidity still solid, watching next leg.",
+    "createdAt": "2025-01-10T08:34:28.000Z",
+    "ticker": "PEPE",
+    "contractAddress": "0x6982508145454ce325ddbe47a25d4ec3d2311933",
+    "pairUrl": "https://dexscreener.com/eth/0x0000000000000000000000000000000000000001"
+  },
+  {
+    "tweetId": "t-1005",
+    "username": "chartbot",
+    "tweetContent": "BONK flirting with breakout. Spot order book stacking.",
+    "createdAt": "2025-01-10T08:20:04.000Z",
+    "ticker": "BONK",
+    "contractAddress": "0x0000000000000000000000000000000000000002",
+    "pairUrl": "https://dexscreener.com/sol/0x0000000000000000000000000000000000000002"
+  }
+]
